@@ -1,13 +1,14 @@
-﻿using System.Reflection.Metadata;
+﻿using System.Globalization;
+using System.Reflection.Metadata;
 using System.Text;
 
 Console.WriteLine("Program started");
 
 const string filepathIn = "C:\\Users\\spenc\\Downloads\\ContactsIn.vcf";
-const string filepathOut = "C:\\Users\\spenc\\Downloads\\CalendarOut.vcf";
+const string filepathOut = "C:\\Users\\spenc\\Downloads\\CalendarOut.ics";
 
 StreamReader reader = new StreamReader(filepathIn);
-//StreamWriter writer = new StreamWriter(filepathOut);
+StreamWriter writer = new StreamWriter(filepathOut);
 
 Console.WriteLine("Files opened");
 
@@ -44,14 +45,21 @@ try
 finally
 { 
     reader.Close();
-    //writer.Close();
 }
 
-//foreach (Contact contact in contacts)
-//{
-//    string exportedContact = contact.Export();
-//    writer.Write(exportedContact);
-//}
+writer.WriteLine("BEGIN:VCALENDAR");
+writer.WriteLine("METHOD:PUBLISH");
+writer.WriteLine("PRODID:ContactsToCalendar v0.1");
+writer.WriteLine("VERSION:2.0");
+
+foreach (Contact contact in contacts)
+{
+    string exportedContact = contact.Export();
+    writer.Write(exportedContact);
+}
+
+writer.WriteLine("END:VCALENDAR");
+writer.Close();
 
 Contact ParseContact()
 {
@@ -103,41 +111,50 @@ void ParseLine(string line, out string property, out string[] values)
 
 public class Contact
 {
-    public string Name;
-    public string Birthday;
+    private string? _birthday;
+    public string? Name;
+    public string? Birthday
+    {
+        get => _birthday;
+        set
+        {
+            string minDate = "2000";
 
-    //public string Export()
-    //{
-    //    StringBuilder sb = new StringBuilder();
+            if (Int32.Parse(value.Substring(0, 4)) < Int32.Parse(minDate))
+            {
+                StringBuilder sb = new StringBuilder(value);
 
+                for (int i = 0; i < 4; i++)
+                {
+                    sb[i] = minDate[i];
+                }
 
+                _birthday = sb.ToString();
+            }
+            else
+            {
+                _birthday = value;
+            }
+        }
+    }
 
-    //    string[] substrings = lineIn.Split(':', ';');
+    public string Export()
+    {
 
-    //    while (true)
-    //    {
-    //        string property;
-    //        string[] values;
-    //        ParseLine()
-    //    }
+        StringBuilder sb = new StringBuilder();
 
-    //    foreach (string substring in substrings)
-    //    {
-    //        if (substring == "BEGIN")
-    //        {
-    //            sb.Append("BEGIN:VCALENDAR\n");
-    //            break;
-    //        }
+        sb.AppendLine("BEGIN:VEVENT");
+        sb.AppendLine("Summary:" + Name + "'s Birthday");
+        sb.AppendLine("UID:" + Guid.NewGuid().ToString());
+        sb.AppendLine("SEQUENCE:0");
+        sb.AppendLine("STATUS:CONFIRMED");
+        sb.AppendLine("TRANSP:TRANSPARENT");
+        sb.AppendLine("RRULE:FREQ=YEARLY");
+        sb.AppendLine("DTSTART;VALUE=DATE:" + Birthday.Replace("-", ""));
+        sb.AppendLine("DTEND;VALUE=DATE:" + Birthday.Replace("-", ""));
+        sb.AppendLine("DTSTAMP:" + DateTime.UtcNow.ToString("yyyyMMdd") + "T000000");
+        sb.AppendLine("END:VEVENT");
 
-    //        if (substring == "END")
-    //        {
-    //            sb.Append("END:VCALENDAR\n");
-
-    //        }
-    //    }
-
-
-
-    //    return sb.ToString();
-    //}
+        return sb.ToString();
+    }
 }
