@@ -12,40 +12,7 @@ StreamWriter writer = new StreamWriter(filepathOut);
 
 Console.WriteLine("Files opened");
 
-string? lineIn;
-StringBuilder sb = new StringBuilder();
-List<Contact> contacts = new List<Contact>();
-
-try
-{
-    lineIn = reader.ReadLine();
-
-    while(lineIn != null)
-    {
-        string property;
-        string[] values;
-
-        ParseLine(lineIn, out property, out values);
-
-        if (property == "BEGIN")
-        {
-            lineIn = reader.ReadLine();
-
-            Contact contact = ParseContact();
-
-            if (!String.IsNullOrEmpty(contact.Birthday))
-            {
-                contacts.Add(contact);
-            }
-        }
-
-        lineIn = reader.ReadLine();
-    }
-}
-finally
-{ 
-    reader.Close();
-}
+List<Contact> contacts = Contact.ParseContactList(filepathIn);
 
 writer.WriteLine("BEGIN:VCALENDAR");
 writer.WriteLine("METHOD:PUBLISH");
@@ -60,54 +27,6 @@ foreach (Contact contact in contacts)
 
 writer.WriteLine("END:VCALENDAR");
 writer.Close();
-
-Contact ParseContact()
-{
-    Contact contact = new Contact();
-
-    try
-    {
-        while (lineIn != null)
-        {
-            string property;
-            string[] values;
-
-            ParseLine(lineIn, out property, out values);
-
-            switch (property)
-            {
-                case "FN":
-                    contact.Name = values[0];
-                    break;
-                case "BDAY":
-                    contact.Birthday = values[1];
-                    break;
-                case "END": return contact;
-                default: break;
-            }
-
-            lineIn = reader.ReadLine();
-        }
-    }
-    finally
-    {
-    }
-
-    return contact;
-}
-
-void ParseLine(string line, out string property, out string[] values)
-{
-    string[] substrings = line.Split(':', ';');
-
-    property = substrings[0];
-    values = new string[substrings.Length - 1];
-
-    for (int i = 1; i <  substrings.Length; i++)
-    {
-        values[i - 1] = substrings[i];
-    }
-}
 
 public class Contact
 {
@@ -136,6 +55,93 @@ public class Contact
                 _birthday = value;
             }
         }
+    }
+
+    public static List<Contact> ParseContactList(string filepathIn)
+    {
+        List<Contact> contacts = new List<Contact>();
+        StreamReader reader = new StreamReader(filepathIn);
+        string? lineIn;
+
+        try
+        {
+            lineIn = reader.ReadLine();
+
+            while (lineIn != null)
+            {
+                string property;
+                string[] values;
+
+                ParseLine(lineIn, out property, out values);
+
+                if (property == "BEGIN")
+                {
+                    Contact contact = ParseContact(ref reader);
+
+                    if (!String.IsNullOrEmpty(contact.Birthday))
+                    {
+                        contacts.Add(contact);
+                    }
+                }
+
+                lineIn = reader.ReadLine();
+            }
+        }
+        finally
+        {
+            reader.Close();
+        }
+
+        return contacts;
+    }
+
+    public static void ParseLine(string line, out string property, out string[] values)
+    {
+        string[] substrings = line.Split(':', ';');
+
+        property = substrings[0];
+        values = new string[substrings.Length - 1];
+
+        for (int i = 1; i < substrings.Length; i++)
+        {
+            values[i - 1] = substrings[i];
+        }
+    }
+
+    public static Contact ParseContact(ref StreamReader reader)
+    {
+        Contact contact = new Contact();
+        string? lineIn = reader.ReadLine();
+
+        try
+        {
+            while (lineIn != null)
+            {
+                string property;
+                string[] values;
+
+                ParseLine(lineIn, out property, out values);
+
+                switch (property)
+                {
+                    case "FN":
+                        contact.Name = values[0];
+                        break;
+                    case "BDAY":
+                        contact.Birthday = values[1];
+                        break;
+                    case "END": return contact;
+                    default: break;
+                }
+
+                lineIn = reader.ReadLine();
+            }
+        }
+        finally
+        {
+        }
+
+        return contact;
     }
 
     public string Export()
