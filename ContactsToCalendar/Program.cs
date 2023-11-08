@@ -11,56 +11,22 @@ namespace ContactsToCalendar
             const string filepathIn = "C:\\Users\\spenc\\Downloads\\ContactsIn.vcf";
             const string filepathOut = "C:\\Users\\spenc\\Downloads\\CalendarOut.ics";
 
-            StreamReader reader = new StreamReader(filepathIn);
-            StreamWriter writer = new StreamWriter(filepathOut);
-
             Console.WriteLine("Files opened");
 
             List<Contact> contacts = Contact.ParseContactList(filepathIn);
-
-            writer.WriteLine("BEGIN:VCALENDAR");
-            writer.WriteLine("METHOD:PUBLISH");
-            writer.WriteLine("PRODID:ContactsToCalendar v0.1");
-            writer.WriteLine("VERSION:2.0");
-
-            foreach (Contact contact in contacts)
-            {
-                string exportedContact = contact.Export();
-                writer.Write(exportedContact);
-            }
-
-            writer.WriteLine("END:VCALENDAR");
-            writer.Close();
+            Contact.ExportContacts(contacts, filepathOut);
         }
     }
 
     public class Contact
     {
-        private string? _birthday;
-        public string? Name;
-        public string? Birthday
+        public string Name { get; set; }
+        public string Birthday { get; set; }
+
+        public Contact()
         {
-            get => _birthday;
-            set
-            {
-                string minDate = "2000";
-
-                if (Int32.Parse(value.Substring(0, 4)) < Int32.Parse(minDate))
-                {
-                    StringBuilder sb = new StringBuilder(value);
-
-                    for (int i = 0; i < 4; i++)
-                    {
-                        sb[i] = minDate[i];
-                    }
-
-                    _birthday = sb.ToString();
-                }
-                else
-                {
-                    _birthday = value;
-                }
-            }
+            Name = "";
+            Birthday = "";
         }
 
         public static List<Contact> ParseContactList(string filepathIn)
@@ -150,9 +116,27 @@ namespace ContactsToCalendar
             return contact;
         }
 
+        public static void ExportContacts(List<Contact> contacts, string filepathOut)
+        {
+            StreamWriter writer = new StreamWriter(filepathOut);
+
+            writer.WriteLine("BEGIN:VCALENDAR");
+            writer.WriteLine("METHOD:PUBLISH");
+            writer.WriteLine("PRODID:ContactsToCalendar v0.1");
+            writer.WriteLine("VERSION:2.0");
+
+            foreach (Contact contact in contacts)
+            {
+                contact.RoundBirthday();
+                writer.Write(contact.Export());
+            }
+
+            writer.WriteLine("END:VCALENDAR");
+            writer.Close();
+        }
+
         public string Export()
         {
-
             StringBuilder sb = new StringBuilder();
 
             sb.AppendLine("BEGIN:VEVENT");
@@ -168,6 +152,23 @@ namespace ContactsToCalendar
             sb.AppendLine("END:VEVENT");
 
             return sb.ToString();
+        }
+
+        public void RoundBirthday()
+        {
+            string minDate = "2000";
+
+            if (Int32.Parse(Birthday.Substring(0, 4)) < Int32.Parse(minDate))
+            {
+                StringBuilder sb = new StringBuilder(Birthday);
+
+                for (int i = 0; i < 4; i++)
+                {
+                    sb[i] = minDate[i];
+                }
+
+                Birthday = sb.ToString();
+            }
         }
     }
 }
