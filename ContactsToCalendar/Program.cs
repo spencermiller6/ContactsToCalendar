@@ -5,11 +5,10 @@ namespace ContactsToCalendar
 {
     class ContactsToCalendar
     {
-
         static void Main(string[] args)
         {
-            string filepathIn = "";
-            string filepathOut = "";
+            string filepathIn;
+            string filepathOut;
 
             GetFilepath(out filepathIn, out filepathOut);
 
@@ -25,7 +24,7 @@ namespace ContactsToCalendar
             while (true)
             {
                 Console.WriteLine("Enter the full path of the vcf contacts file you'd like to import:");
-                input = Console.ReadLine();
+                input = Console.ReadLine() ?? "";
 
                 try
                 {
@@ -136,10 +135,7 @@ namespace ContactsToCalendar
                     lineIn = reader.ReadLine();
                 }
             }
-            finally
-            {
-
-            }
+            finally { }
 
             return contact;
         }
@@ -150,7 +146,7 @@ namespace ContactsToCalendar
 
             writer.WriteLine("BEGIN:VCALENDAR");
             writer.WriteLine("METHOD:PUBLISH");
-            writer.WriteLine("PRODID:ContactsToCalendar v0.1");
+            writer.WriteLine("PRODID:ContactsToCalendar v1.0");
             writer.WriteLine("VERSION:2.0");
 
             foreach (Contact contact in contacts)
@@ -166,6 +162,7 @@ namespace ContactsToCalendar
         public string Export()
         {
             StringBuilder sb = new StringBuilder();
+            DateTime timestamp = DateTime.UtcNow;
 
             sb.AppendLine("BEGIN:VEVENT");
             sb.AppendLine("Summary:" + Name + "'s Birthday");
@@ -176,12 +173,13 @@ namespace ContactsToCalendar
             sb.AppendLine("RRULE:FREQ=YEARLY");
             sb.AppendLine("DTSTART;VALUE=DATE:" + Birthday.Replace("-", ""));
             sb.AppendLine("DTEND;VALUE=DATE:" + Birthday.Replace("-", ""));
-            sb.AppendLine("DTSTAMP:" + DateTime.UtcNow.ToString("yyyyMMdd") + "T000000");
+            sb.AppendLine("DTSTAMP:" + timestamp.ToString("yyyyMMdd") + "T" + timestamp.ToString("hhMMss"));
             sb.AppendLine("END:VEVENT");
 
             return sb.ToString();
         }
 
+        // Some calendars have maximum event age, this caps all birthdays to the year 2000
         public void RoundBirthday()
         {
             const string minDate = "2000";
