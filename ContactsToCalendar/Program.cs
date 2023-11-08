@@ -1,20 +1,47 @@
-﻿using System.Text;
+﻿using System.Reflection.PortableExecutable;
+using System.Text;
 
 namespace ContactsToCalendar
 {
     class ContactsToCalendar
     {
+
         static void Main(string[] args)
         {
-            Console.WriteLine("Program started");
+            string filepathIn = "";
+            string filepathOut = "";
 
-            const string filepathIn = "C:\\Users\\spenc\\Downloads\\ContactsIn.vcf";
-            const string filepathOut = "C:\\Users\\spenc\\Downloads\\CalendarOut.ics";
-
-            Console.WriteLine("Files opened");
+            GetFilepath(out filepathIn, out filepathOut);
 
             List<Contact> contacts = Contact.ParseContactList(filepathIn);
             Contact.ExportContacts(contacts, filepathOut);
+        }
+
+        static void GetFilepath(out string filepathIn, out string filepathOut)
+        {
+            string? input;
+            StreamReader reader;
+
+            while (true)
+            {
+                Console.WriteLine("Enter the full path of the vcf contacts file you'd like to import:");
+                input = Console.ReadLine();
+
+                try
+                {
+                    reader = new StreamReader(input);
+                    reader.Close();
+
+                    filepathIn = input;
+                    filepathOut = Path.GetDirectoryName(filepathIn) + "\\Calendar.ics";
+
+                    return;
+                }
+                catch
+                {
+                    Console.Write("Invalid filepath. ");
+                }
+            }
         }
     }
 
@@ -111,6 +138,7 @@ namespace ContactsToCalendar
             }
             finally
             {
+
             }
 
             return contact;
@@ -156,7 +184,7 @@ namespace ContactsToCalendar
 
         public void RoundBirthday()
         {
-            string minDate = "2000";
+            const string minDate = "2000";
 
             if (Int32.Parse(Birthday.Substring(0, 4)) < Int32.Parse(minDate))
             {
